@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Doctors Directory Preview</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#eef4fb;--surface:#fff;--soft:#f7f9fc;--text:#1f2a44;--muted:#6f7a91;--primary:#f1b434;--secondary:#7ea0c8;--border:#dfe6ef;--shadow:0 12px 30px rgba(24,44,79,.1);--radius:22px}
+    body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#dfeaf8 0%,#f5f7fb 50%,#eff4fb 100%);color:var(--text);padding:18px}
+    img{width:100%;display:block;object-fit:cover}
+    button,input,select{font:inherit}
+    .hidden{display:none!important}
+    .page{max-width:1240px;margin:0 auto;background:rgba(255,255,255,.93);border:1px solid var(--border);border-radius:30px;box-shadow:var(--shadow);overflow:hidden}
+    .topbar{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--border);background:#fff;position:sticky;top:0;z-index:10}
+    .top-left,.top-right{display:flex;align-items:center;gap:14px}
+    .menu-btn{width:46px;height:46px;border:none;border-radius:14px;background:#edf3fb;cursor:pointer}
+    .menu-btn span{display:block;width:20px;height:2px;background:#5e80a6;border-radius:99px;margin:4px auto}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:1.6rem}.logo{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#9cb8d7,#7093bd);color:#fff}
+    .credit{padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,var(--primary),#f6c55f);color:#fff;font-weight:700}
+    .hero{padding:28px;background:linear-gradient(135deg,#eef5fc,#f8fbff);border-bottom:1px solid var(--border)}
+    .hero-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px;align-items:center}
+    .hero h1{font-size:3rem;line-height:1.1;margin-bottom:12px;color:#22375b}.hero p{color:var(--muted);font-size:1.06rem;margin-bottom:18px;max-width:680px}
+    .search-panel{background:rgba(255,255,255,.95);border:1px solid var(--border);border-radius:20px;padding:12px;box-shadow:0 8px 18px rgba(24,44,79,.08)}
+    .toolbar{display:grid;grid-template-columns:1.7fr 1fr 1fr;gap:10px}.search-wrap{position:relative}.search-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:#5e80a6}
+    .search,.sort,.count{width:100%;min-height:54px;border-radius:14px;border:1px solid var(--border);background:#fff;color:var(--text)}
+    .search{padding:14px 16px 14px 44px}.sort,.count{padding:14px 16px}.count{display:flex;align-items:center;font-weight:700;color:#5e80a6;background:#f6f9fd}
+    .hero-card{background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(240,246,252,.92));border:1px solid var(--border);border-radius:26px;padding:20px;box-shadow:0 8px 18px rgba(24,44,79,.08)}
+    .hero-card h3{margin-bottom:10px;color:#22375b}.hero-card p{margin-bottom:14px}.badges{display:flex;gap:10px;flex-wrap:wrap}.badge{padding:8px 12px;border-radius:999px;background:#edf4fb;border:1px solid #d7e3f1;color:#5e80a6;font-size:.9rem;font-weight:700}
+    .main{padding:28px}.head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:20px}.head h2{font-size:2rem;color:#22375b}.head p{color:var(--muted)}.active{display:flex;gap:8px;flex-wrap:wrap}.pill{background:#eff5fc;border:1px solid #d7e3f1;color:#5e80a6;border-radius:999px;padding:8px 12px;font-size:.9rem;font-weight:700}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:22px}.card{background:#fff;border:1px solid var(--border);border-radius:20px;overflow:hidden;cursor:pointer;box-shadow:0 8px 18px rgba(24,44,79,.08);transition:.25s}.card:hover{transform:translateY(-7px);box-shadow:0 18px 34px rgba(24,44,79,.14)}.photo{aspect-ratio:4/4.4;background:#dfeaf8;position:relative}.overlay{position:absolute;inset:auto 0 0 0;padding:20px 16px 16px;background:linear-gradient(180deg,rgba(17,28,49,0) 0%,rgba(24,44,79,.82) 100%);color:#fff}.name{font-size:1.2rem;font-weight:700;margin-bottom:5px}.meta{font-size:.96rem;margin-bottom:4px}.mini{font-size:.88rem;opacity:.9}
+    .empty{display:none;margin-top:12px;background:#fff;border:1px dashed #cbd6e5;border-radius:18px;padding:34px 18px;text-align:center;color:var(--muted)}
+    .details{padding:28px;animation:fadeUp .35s ease}.back{display:inline-flex;gap:8px;align-items:center;border:none;background:#edf4fb;color:#5e80a6;padding:12px 18px;border-radius:999px;font-weight:700;cursor:pointer;box-shadow:0 8px 18px rgba(24,44,79,.08);margin-bottom:22px}@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .details-grid{display:grid;grid-template-columns:330px 1fr;gap:22px;margin-bottom:22px}.profile,.panel,.gallery-block{background:#fff;border:1px solid var(--border);border-radius:22px;box-shadow:0 8px 18px rgba(24,44,79,.08)}.profile{overflow:hidden}.profile-img{aspect-ratio:4/4.6;background:#dfeaf8}.profile-info{padding:18px;background:linear-gradient(180deg,#6f8fb4,#466789);color:#fff}.profile-info h2{font-size:1.8rem;margin-bottom:8px}.rating{display:inline-flex;gap:8px;background:rgba(255,255,255,.12);padding:8px 12px;border-radius:999px;font-weight:700;margin-bottom:14px}.cta{display:grid;gap:10px}.cta button{padding:14px 16px;border:none;border-radius:14px;font-weight:700;cursor:pointer}.cta1{background:linear-gradient(135deg,var(--primary),#f6c55f);color:#fff}.cta2{background:#fff8e8;color:#b07c12;border:1px solid #f2d48c}
+    .panel{padding:22px;display:grid;gap:18px}.title-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--border)}.title-row h1{font-size:2.2rem;color:#22375b}.verify{padding:8px 12px;border-radius:999px;background:#edf4fb;border:1px solid #d7e3f1;color:#5e80a6;font-size:.9rem;font-weight:700}
+    .info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.info{background:var(--soft);border:1px solid #e5edf7;border-radius:16px;padding:14px 16px}.label{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:6px;font-weight:700}.value{font-weight:700}.panel h3{font-size:1.35rem;color:#22375b;margin-bottom:8px}.copy{color:#3b4a66}.chips{display:flex;gap:10px;flex-wrap:wrap}.chip{padding:9px 13px;border-radius:999px;background:#edf4fb;color:#5e80a6;border:1px solid #d7e3f1;font-size:.92rem;font-weight:700}
+    .gallery-block{padding:20px}.gallery-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}.gallery-head h3{font-size:1.5rem;color:#22375b}.gallery{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.gallery img{aspect-ratio:1/1;border-radius:16px;border:1px solid #e5edf7;background:#dfeaf8}
+    .overlay-bg{position:fixed;inset:0;background:rgba(17,28,49,.38);z-index:90;opacity:0;visibility:hidden;transition:.25s}.overlay-bg.show{opacity:1;visibility:visible}.sidebar{position:fixed;top:0;left:0;width:340px;max-width:92vw;height:100vh;background:rgba(255,255,255,.98);border-right:1px solid var(--border);box-shadow:20px 0 40px rgba(24,44,79,.16);z-index:100;transform:translateX(-100%);transition:.28s;display:flex;flex-direction:column}.sidebar.open{transform:translateX(0)}.side-head{padding:22px 20px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}.side-head h3{color:#22375b}.close{width:42px;height:42px;border:none;border-radius:12px;background:#edf4fb;color:#5e80a6;cursor:pointer}.side-body{padding:18px 20px 24px;overflow:auto}.group{margin-bottom:22px}.group h4{margin-bottom:10px;color:#22375b}.box{background:var(--soft);border:1px solid #e5edf7;border-radius:16px;padding:12px;display:grid;gap:8px}.option{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid #e8eef6;color:#435270}.side-actions{display:grid;gap:10px;margin-top:10px}.side-actions button{border:none;padding:14px 16px;border-radius:14px;font-weight:700;cursor:pointer}.apply{background:linear-gradient(135deg,var(--primary),#f6c55f);color:#fff}.reset{background:#edf4fb;color:#5e80a6}
+    .footer{padding:18px 28px 28px;color:var(--muted);text-align:center}
+    @media(max-width:1100px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.hero-grid{grid-template-columns:1fr}}
+    @media(max-width:860px){body{padding:12px}.topbar,.hero,.main,.details,.footer{padding-left:16px;padding-right:16px}.toolbar{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.details-grid{grid-template-columns:1fr}.gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.credit{display:none}}
+    @media(max-width:560px){.hero h1{font-size:2rem}.head h2{font-size:1.55rem}.grid,.gallery,.info-grid{grid-template-columns:1fr}.title-row h1{font-size:1.6rem}}
+  </style>
+</head>
+<body>
+  <div class="overlay-bg" id="overlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="side-head">
+      <h3>Filter Directory</h3>
+      <button class="close" id="closeSidebar">×</button>
+    </div>
+    <div class="side-body">
+      <div class="group"><h4>Universities</h4><div class="box" id="uniBox"></div></div>
+      <div class="group"><h4>Colleges</h4><div class="box" id="collegeBox"></div></div>
+      <div class="group"><h4>Specialities</h4><div class="box" id="specBox"></div></div>
+      <div class="side-actions">
+        <button class="apply" id="applyBtn">Apply Filters</button>
+        <button class="reset" id="resetBtn">Reset Filters</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="page">
+    <header class="topbar">
+      <div class="top-left">
+        <button class="menu-btn" id="openSidebar" aria-label="Open filters"><span></span><span></span><span></span></button>
+        <div class="brand"><div class="logo">MD</div><div>MEDIEU</div></div>
+      </div>
+      <div class="top-right"><div class="credit">Preview</div></div>
+    </header>
+
+    <section id="directoryView">
+      <section class="hero">
+        <div class="hero-grid">
+          <div>
+            <h1>Find Experienced Doctors</h1>
+            <p>Preview of the public directory. Search by doctor name, address, speciality, university, or college. Open the left sidebar from the three lines to filter the results.</p>
+            <div class="search-panel">
+              <div class="toolbar">
+                <div class="search-wrap"><span class="search-icon">🔎</span><input class="search" id="searchInput" placeholder="Search by name, address, speciality, university, college..." /></div>
+                <select class="sort" id="sortSelect">
+                  <option value="name-asc">Sort: Name A-Z</option>
+                  <option value="name-desc">Sort: Name Z-A</option>
+                  <option value="speciality-asc">Sort: Speciality A-Z</option>
+                  <option value="university-asc">Sort: University A-Z</option>
+                  <option value="college-asc">Sort: College A-Z</option>
+                  <option value="address-asc">Sort: Address A-Z</option>
+                </select>
+                <div class="count" id="countBox">0 doctors found</div>
+              </div>
+            </div>
+          </div>
+          <div class="hero-card">
+            <h3>How this preview works</h3>
+            <p>This version simulates the hosted site using one HTML file, so you can test search, sorting, sidebar filters, and opening doctor details.</p>
+            <div class="badges"><span class="badge">Search</span><span class="badge">Sort</span><span class="badge">Sidebar</span><span class="badge">Details</span></div>
+          </div>
+        </div>
+      </section>
+      <main class="main">
+        <div class="head">
+          <div><h2>Browse trusted doctors and specialists</h2><p>Click any card to open the full profile in the same page.</p></div>
+          <div class="active" id="activeFilters"></div>
+        </div>
+        <div class="grid" id="grid"></div>
+        <div class="empty" id="empty">No doctors found. Try another search or clear the filters.</div>
+      </main>
+    </section>
+
+    <section class="details hidden" id="detailsView"></section>
+    <div class="footer">Static preview of the directory behavior for your hosted version</div>
+  </div>
+
+  <script>
+    const doctors = [
+      {id:1,name:'Dr. Ali Mohammad',speciality:'Cardiology',university:'Baghdad University',college:'College of Medicine',address:'Green City Medical Center, 456 Wellness St, Baghdad',email:'ali.mohammad@example.com',phone:'+964 770 111 2233',birthday:'May 11, 1992',graduationYear:'2016',experience:'8 Years',rating:'4.9',about:'Dr. Ali Mohammad is a skilled cardiology specialist with a strong focus on heart disease prevention, patient education, and long-term cardiac care.',skills:['Heart Checkups','Preventive Care','ECG Reading','Patient Counseling'],photo:'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=900&q=80',gallery:['https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=900&q=80']},
+      {id:2,name:'Dr. Mohammed Al-Jadi',speciality:'Internal Medicine',university:'Johns Hopkins University',college:'School of Medicine',address:'Health Town Hospital, 220 Care Avenue, Baghdad',email:'mohammed.aljadi@example.com',phone:'+964 770 222 3344',birthday:'August 12, 1991',graduationYear:'2015',experience:'10 Years',rating:'4.9',about:'Dr. Mohammed Al-Jadi is highly experienced in internal medicine and adult health management. He focuses on accurate diagnosis and preventive care.',skills:['Primary Care','Diagnostic Tests','Chronic Disease Management','Preventive Medicine'],photo:'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=900&q=80',gallery:['https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1612277795421-9bc7706a4a41?auto=format&fit=crop&w=900&q=80']},
+      {id:3,name:'Dr. Ghaithm Kareem',speciality:'Medical Education',university:'Al-Nahrain University',college:'College of Medicine',address:'Academic Medical Center, 88 University Road, Baghdad',email:'ghaithm.kareem@example.com',phone:'+964 770 333 4455',birthday:'January 21, 1994',graduationYear:'2018',experience:'6 Years',rating:'4.8',about:'Dr. Ghaithm Kareem works in medical education and mentoring. He supports academic development, clinical guidance, and training programs.',skills:['Clinical Teaching','Curriculum Support','Mentorship','Case Discussions'],photo:'https://images.unsplash.com/photo-1614608682850-e0d6ed316d47?auto=format&fit=crop&w=900&q=80',gallery:['https://images.unsplash.com/photo-1614608682850-e0d6ed316d47?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=900&q=80']},
+      {id:4,name:'Dr. Aqeel Qasim',speciality:'Medical Education',university:'Baghdad University',college:'College of Medicine',address:'Medical Learning Center, 19 Scholars St, Baghdad',email:'aqeel.qasim@example.com',phone:'+964 770 444 5566',birthday:'March 05, 1993',graduationYear:'2017',experience:'7 Years',rating:'4.7',about:'Dr. Aqeel Qasim specializes in medical teaching and student supervision. He helps students connect theory with practical clinical learning.',skills:['Student Supervision','Lecture Design','Clinical Training','Academic Support'],photo:'https://images.unsplash.com/photo-1622902046580-2b47f47f5471?auto=format&fit=crop&w=900&q=80',gallery:['https://images.unsplash.com/photo-1622902046580-2b47f47f5471?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1551190822-a9333d879b1f?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1580281657527-47a4c8f0d3f6?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=900&q=80']},
+      {id:5,name:'Dr. Yasmeen Kamal',speciality:'Dermatology',university:'Baghdad University',college:'College of Medicine',address:'Clear Skin Clinic, 72 Beauty Lane, Baghdad',email:'yasmeen.kamal@example.com',phone:'+964 770 555 6677',birthday:'September 14, 1990',graduationYear:'2014',experience:'9 Years',rating:'4.9',about:'Dr. Yasmeen Kamal is a dermatologist focused on skin care, acne treatment, and chronic skin conditions.',skills:['Acne Treatment','Skin Diagnosis','Long-Term Care','Cosmetic Advice'],photo:'https://images.unsplash.com/photo-1594824388853-2f82f8a1d89b?auto=format&fit=crop&w=900&q=80',gallery:['https://images.unsplash.com/photo-1594824388853-2f82f8a1d89b?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1612532275214-e4ca76d0e4d1?auto=format&fit=crop&w=900&q=80']},
+      {id:6,name:'Dr. Omar Saleh',speciality:'Orthopedics',university:'Al-Mustansiriya University',college:'College of Medicine',address:'Bone and Joint Center, 410 Ortho Street, Baghdad',email:'omar.saleh@example.com',phone:'+964 770 666 7788',birthday:'June 18, 1992',graduationYear:'2016',experience:'8 Years',rating:'4.8',about:'Dr. Omar Saleh is an orthopedics doctor with experience in joint injuries, rehabilitation plans, and general bone care.',skills:['Joint Pain Care','Fracture Follow-Up','Rehabilitation Plans','Mobility Support'],photo:'https://images.unsplash.com/photo-1612531386530-97286d97c2d2?auto=format&fit=crop&w=900&q=80',gallery:['https://images.unsplash.com/photo-1612531386530-97286d97c2d2?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1516549655669-df2479abb4b7?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=900&q=80']},
+      {id:7,name:'Dr. Farah Ameen',speciality:'Pediatrics',university:'Al-Nahrain University',college:'College of Medicine',address:'Little Care Hospital, 31 Family Road, Baghdad',email:'farah.ameen@example.com',phone:'+964 770 777 8899',birthday:'February 27, 1993',graduationYear:'2017',experience:'7 Years',rating:'4.9',about:'Dr. Farah Ameen is a pediatrics specialist with a warm communication style and strong experience in child health and parent guidance.',skills:['Child Checkups','Growth Monitoring','Parent Guidance','Pediatric Care'],photo:'https://images.unsplash.com/photo-1594824388853-2f82f8a1d89b?auto=format&fit=crop&w=900&q=80',gallery:['https://images.unsplash.com/photo-1594824388853-2f82f8a1d89b?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1618498082410-b4aa22193b38?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1580281657527-47a4c8f0d3f6?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?auto=format&fit=crop&w=900&q=80']},
+      {id:8,name:'Dr. Sami Hassan',speciality:'Cardiology',university:'Baghdad University',college:'College of Medicine',address:'Heart Plus Center, 102 Care District, Baghdad',email:'sami.hassan@example.com',phone:'+964 770 888 9900',birthday:'November 07, 1989',graduationYear:'2013',experience:'11 Years',rating:'4.8',about:'Dr. Sami Hassan works in cardiology with a strong interest in heart screening, preventive advice, and treatment planning.',skills:['Cardiac Screening','Preventive Cardiology','Treatment Planning','Clinical Reviews'],photo:'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=900&q=80',gallery:['https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1612277795421-9bc7706a4a41?auto=format&fit=crop&w=900&q=80','https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=900&q=80']}
+    ];
+
+    const state = { search:'', sort:'name-asc', university:[], college:[], speciality:[] };
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('empty');
+    const searchInput = document.getElementById('searchInput');
+    const sortSelect = document.getElementById('sortSelect');
+    const countBox = document.getElementById('countBox');
+    const activeFilters = document.getElementById('activeFilters');
+    const directoryView = document.getElementById('directoryView');
+    const detailsView = document.getElementById('detailsView');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+
+    function uniq(key){ return [...new Set(doctors.map(d => d[key]))].sort(); }
+    function renderFilterBox(el, items, group){ el.innerHTML = items.map((item, i) => `<label class="option"><input type="checkbox" data-group="${group}" value="${item}"> <span>${item}</span></label>`).join(''); }
+    renderFilterBox(document.getElementById('uniBox'), uniq('university'), 'university');
+    renderFilterBox(document.getElementById('collegeBox'), uniq('college'), 'college');
+    renderFilterBox(document.getElementById('specBox'), uniq('speciality'), 'speciality');
+
+    function openSidebar(){ sidebar.classList.add('open'); overlay.classList.add('show'); }
+    function closeSidebar(){ sidebar.classList.remove('open'); overlay.classList.remove('show'); }
+    document.getElementById('openSidebar').onclick = openSidebar;
+    document.getElementById('closeSidebar').onclick = closeSidebar;
+    overlay.onclick = closeSidebar;
+
+    function checked(group){ return [...document.querySelectorAll(`input[data-group="${group}"]:checked`)].map(i => i.value); }
+    function setChecked(group, values){ document.querySelectorAll(`input[data-group="${group}"]`).forEach(i => i.checked = values.includes(i.value)); }
+
+    function matchesFilter(arr, value){ return !arr.length || arr.includes(value); }
+    function matchesSearch(d, q){ if(!q) return true; const text = [d.name,d.address,d.speciality,d.university,d.college].join(' ').toLowerCase(); return text.includes(q.toLowerCase()); }
+    function sortList(list, sort){ const out = [...list]; out.sort((a,b) => { let fa='', fb=''; if(sort.startsWith('name')){fa=a.name;fb=b.name;} else if(sort.startsWith('speciality')){fa=a.speciality;fb=b.speciality;} else if(sort.startsWith('university')){fa=a.university;fb=b.university;} else if(sort.startsWith('college')){fa=a.college;fb=b.college;} else {fa=a.address;fb=b.address;} let cmp = fa.localeCompare(fb); return sort==='name-desc' ? -cmp : cmp; }); return out; }
+    function currentList(){ return sortList(doctors.filter(d => matchesSearch(d, state.search) && matchesFilter(state.university, d.university) && matchesFilter(state.college, d.college) && matchesFilter(state.speciality, d.speciality)), state.sort); }
+
+    function renderActive(){ const items=[]; if(state.search) items.push(`Search: "${state.search}"`); state.university.forEach(v => items.push(`University: ${v}`)); state.college.forEach(v => items.push(`College: ${v}`)); state.speciality.forEach(v => items.push(`Speciality: ${v}`)); activeFilters.innerHTML = items.map(i => `<span class="pill">${i}</span>`).join(''); }
+
+    function renderCards(){ const list = currentList(); grid.innerHTML=''; countBox.textContent = `${list.length} doctor${list.length===1?'':'s'} found`; renderActive(); empty.style.display = list.length ? 'none' : 'block';
+      list.forEach(d => {
+        const card = document.createElement('div'); card.className = 'card'; card.tabIndex = 0;
+        card.innerHTML = `<div class="photo"><img src="${d.photo}" alt="${d.name}"><div class="overlay"><div class="name">${d.name}</div><div class="meta">${d.speciality}</div><div class="mini">${d.university}</div></div></div>`;
+        card.onclick = () => openDetails(d.id);
+        card.onkeydown = e => { if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openDetails(d.id);} };
+        grid.appendChild(card);
+      });
+    }
+
+    function openDetails(id){ const d = doctors.find(x => x.id === id); if(!d) return; detailsView.innerHTML = `
+      <button class="back" id="backBtn">← Back to Directory</button>
+      <div class="details-grid">
+        <div class="profile">
+          <div class="profile-img"><img src="${d.photo}" alt="${d.name}"></div>
+          <div class="profile-info">
+            <h2>${d.name}</h2>
+            <div class="rating">⭐ ${d.rating} Rating</div>
+            <div class="cta"><button class="cta1">Send Message</button><button class="cta2">Book Appointment</button></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="title-row"><h1>${d.name}</h1><div class="verify">Verified Specialist</div></div>
+          <div class="info-grid">
+            <div class="info"><span class="label">Speciality</span><span class="value">${d.speciality}</span></div>
+            <div class="info"><span class="label">University</span><span class="value">${d.university}</span></div>
+            <div class="info"><span class="label">College</span><span class="value">${d.college}</span></div>
+            <div class="info"><span class="label">Address</span><span class="value">${d.address}</span></div>
+            <div class="info"><span class="label">Birthday</span><span class="value">${d.birthday}</span></div>
+            <div class="info"><span class="label">Graduation Year</span><span class="value">${d.graduationYear}</span></div>
+            <div class="info"><span class="label">Experience</span><span class="value">${d.experience}</span></div>
+            <div class="info"><span class="label">Phone</span><span class="value">${d.phone}</span></div>
+            <div class="info"><span class="label">Email</span><span class="value">${d.email}</span></div>
+          </div>
+          <div><h3>About</h3><div class="copy">${d.about}</div></div>
+          <div><h3>Skills</h3><div class="chips">${d.skills.map(s => `<span class="chip">${s}</span>`).join('')}</div></div>
+        </div>
+      </div>
+      <div class="gallery-block">
+        <div class="gallery-head"><h3>Extra Photos</h3><div class="verify">Gallery</div></div>
+        <div class="gallery">${d.gallery.map(g => `<img src="${g}" alt="${d.name} extra photo">`).join('')}</div>
+      </div>`;
+      directoryView.classList.add('hidden'); detailsView.classList.remove('hidden'); window.scrollTo(0,0);
+      document.getElementById('backBtn').onclick = () => { detailsView.classList.add('hidden'); directoryView.classList.remove('hidden'); window.scrollTo(0,0); };
+    }
+
+    searchInput.addEventListener('input', e => { state.search = e.target.value.trim(); renderCards(); });
+    sortSelect.addEventListener('change', e => { state.sort = e.target.value; renderCards(); });
+    document.getElementById('applyBtn').onclick = () => { state.university = checked('university'); state.college = checked('college'); state.speciality = checked('speciality'); renderCards(); closeSidebar(); };
+    document.getElementById('resetBtn').onclick = () => { state.university=[]; state.college=[]; state.speciality=[]; setChecked('university',[]); setChecked('college',[]); setChecked('speciality',[]); renderCards(); };
+    document.addEventListener('keydown', e => { if(e.key==='Escape') closeSidebar(); });
+
+    renderCards();
+  </script>
+</body>
+</html>
