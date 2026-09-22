@@ -1,53 +1,52 @@
 import os
 import requests
 import gspread
-from fastapi import FastAPI, Request, Response
-from oauth2client.service_account import ServiceAccountCredentials
+from fastapi import FastAPI, Request, Response, BackgroundTasks
+from google.oauth2.service_account import Credentials
 from google import genai
 
 app = FastAPI()
 
-# --- CONFIGURATION ---
-VERIFY_TOKEN = "myestate"
-WHATSAPP_TOKEN = "EAAPHdN5JhgABSvJruoJZAidrcNIMZByNTcCZAZBpDDpO1rdQGULNX408mDxoDsctdHzvIT2HrZBDaK5zkqHFPu3UToWp7GZBuYgFNjKCrZCMJLah4F41aVbqYSvMMc1tZBwF64PVGjZAYJ5t9xZC73rfZBV3nGF9pTd1jT8h2A2pizgqD2IZCUZBb5gKZCwxI19DbYZAQ6v0iY2SGTQ0q0hCUnVTlsMz47uzhxsdi4YZCA1D8jFm"
-PHONE_NUMBER_ID = "1234328209774020"
-GEMINI_API_KEY = "AQ.Ab8RN6JemqiiRP3K0fCC1Km_Qx9nUappryi4KlFY1S8C5DTFbg"
+# --- CONFIGURATION (Load via Environment Variables) ---
+VERIFY_TOKEN = os.getenv("myestate", "")
+WHATSAPP_TOKEN = os.getenv("EAAPHdN5JhgABSt54Fdrvu8pVNiukR6F3hILTcwHwvE4xVsBk0HDB6NWiZBZA3r79OPUFcIgZAwgZC4c1e5o2fC5x0AQQpmZCm97HPoNh64u0VYdTdXgtxp660unhD9FZAPX2llQEbHnOGIC7seYY48UGFoPmMj7Kh8ZCStYToEMKSJMRIGHr9YnkEbK5wPfR5aaxwZBsb65lgNBjTJeJCf50ZCYaWqWCpFqxo4NP4iN9yYstYOZClWJh1sXa9ye8qts552IZBZCuqDtZBDKF69FZC2VrZBco23WHsDRT64BU5FNhwZDZD", "")
+PHONE_NUMBER_ID = os.getenv("1282141248322293", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 # Initialize Gemini Client
 ai_client = genai.Client(api_key=GEMINI_API_KEY)
 
+# Initialize Google Sheets Client once globally
+SHEET_SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
+sheets_creds = Credentials.from_service_account_file("credentials.json", scopes=SHEET_SCOPES)
+gspread_client = gspread.authorize(sheets_creds)
 
-# --- 1. FETCH AVAILABLE INVENTORY FROM GOOGLE SHEETS ---
+
+# --- 1. FETCH AVAILABLE INVENTORY ---
 def get_available_inventory() -> str:
     try:
-        scope = [
-            "https://spreadsheets.google.com/feeds",
-            "https://www.googleapis.com/auth/drive"
-        ]
-        creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
-        client = gspread.authorize(creds)
-        
-        # Open "Real Estate" sheet and select "Inventory" tab
-        sheet = client.open("Real Estate").worksheet("Inventory")
+        sheet = gspread_client.open("Real Estate").worksheet("Inventory")
         all_records = sheet.get_all_records()
-        
-        # Filter for "Available" properties only
+
         available_properties = [
-            row for row in all_records 
+            row for row in all_records
             if str(row.get("Status", "")).strip().lower() == "available"
         ]
-        
-        # Format inventory into a readable string for Gemini
-        inventory_text = ""
-        for idx, item in enumerate(available_properties, 1):
-            inventory_text += (
-                f"{idx}. Type: {item.get('Type')}, Location: {item.get('City/Area')}, "
-                f"Bedrooms: {item.get('Bedrooms')}, Price: {item.get('Price')}, "
-                f"Details: {item.get('Description')}\n"
-            )
-            
-        return inventory_text if inventory_text else "No available properties at the moment."
-        
+
+        if not available_properties:
+            return "No available properties at the moment."
+
+        inventory_lines = [
+            f"{idx}. Type: {item.get('Type')}, Location: {item.get('City/Area')}, "
+            f"Bedrooms: {item.get('Bedrooms')}, Price: {item.get('Price')}, "
+            f"Details: {item.get('Description')}"
+            for idx, item in enumerate(available_properties, 1)
+        ]
+        return "\n".join(inventory_lines)
+
     except Exception as e:
         print(f"Error reading Google Sheets: {e}")
         return "Error fetching inventory."
@@ -66,12 +65,11 @@ Here is our current AVAILABLE property inventory:
 Customer Inquiry: "{user_message}"
 
 Instructions:
-1. Analyze the customer inquiry and recommend the top matching option(s) from the available inventory.
-2. If matching properties exist, state their details (Type, Location, Bedrooms, Price, Details) clearly in a concise, friendly text message.
-3. If no matching property is found, politely inform the customer and mention what areas/types are currently available.
-4. Keep the reply concise, professional, and suitable for a WhatsApp message (use bullet points or bold text if necessary). Reply in the same language as the customer's message (Arabic or English).
+1. Recommend matching properties from the available inventory.
+2. State details (Type, Location, Bedrooms, Price, Details) clearly and concisely.
+3. If no matching property is found, politely inform the customer and suggest what is currently available.
+4. Keep the reply concise and formatted for WhatsApp (use bold text or short bullet points). Reply in the same language as the inquiry (e.g., Arabic or English).
 """
-
     try:
         response = ai_client.models.generate_content(
             model="gemini-2.5-flash",
@@ -80,10 +78,10 @@ Instructions:
         return response.text.strip()
     except Exception as e:
         print(f"Error calling Gemini API: {e}")
-        return "Thank you for reaching out! Our team will get back to you shortly with matching options."
+        return "Thank you for reaching out! Our team will get back to you shortly with options."
 
 
-# --- 3. SEND WHATSAPP MESSAGE VIA META GRAPH API ---
+# --- 3. SEND WHATSAPP MESSAGE ---
 def send_whatsapp_message(to_phone: str, text: str):
     url = f"https://graph.facebook.com/v20.0/{PHONE_NUMBER_ID}/messages"
     headers = {
@@ -96,8 +94,18 @@ def send_whatsapp_message(to_phone: str, text: str):
         "type": "text",
         "text": {"body": text},
     }
-    response = requests.post(url, json=payload, headers=headers)
-    print(f"WhatsApp API Response: {response.status_code}")
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        response.raise_for_status()
+    except requests.RequestException as e:
+        print(f"WhatsApp API delivery error: {e}")
+
+
+# --- BACKGROUND WORKER ---
+def process_incoming_message(sender_phone: str, user_text: str):
+    inventory = get_available_inventory()
+    reply_text = generate_ai_reply(user_text, inventory)
+    send_whatsapp_message(sender_phone, reply_text)
 
 
 # --- 4. FASTAPI WEBHOOK ENDPOINTS ---
@@ -113,31 +121,27 @@ async def verify_webhook(request: Request):
 
 
 @app.post("/webhook")
-async def receive_webhook(request: Request):
+async def receive_webhook(request: Request, background_tasks: BackgroundTasks):
     payload = await request.json()
+
     try:
-        entry = payload.get("entry", [])[0]
-        changes = entry.get("changes", [])[0]
-        value = changes.get("value", {})
+        entries = payload.get("entry", [])
+        for entry in entries:
+            for change in entry.get("changes", []):
+                value = change.get("value", {})
+                messages = value.get("messages", [])
 
-        if "messages" in value:
-            message_obj = value["messages"][0]
-            sender_phone = message_obj["from"]
-            
-            # Extract text message body
-            if message_obj.get("type") == "text":
-                user_text = message_obj["text"]["body"].strip()
-                
-                # Fetch available rows from Sheets
-                inventory = get_available_inventory()
-                
-                # Generate AI match using Gemini
-                reply_text = generate_ai_reply(user_text, inventory)
-                
-                # Send reply to customer (no lead data stored)
-                send_whatsapp_message(sender_phone, reply_text)
+                for msg in messages:
+                    if msg.get("type") == "text":
+                        sender_phone = msg.get("from")
+                        user_text = msg.get("text", {}).get("body", "").strip()
 
+                        # Dispatch task to background and reply 200 immediately
+                        background_tasks.add_task(
+                            process_incoming_message, sender_phone, user_text
+                        )
     except Exception as e:
-        print(f"Error processing webhook: {e}")
+        print(f"Error parsing webhook payload: {e}")
 
+    # Meta requires a rapid 200 OK response
     return {"status": "success"}
