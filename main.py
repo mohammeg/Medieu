@@ -4,13 +4,15 @@ import gspread
 from fastapi import FastAPI, Request, Response, BackgroundTasks
 from google.oauth2.service_account import Credentials
 from google import genai
+from dotenv import load_dotenv
 
+load_dotenv() 
 app = FastAPI()
 
 # --- CONFIGURATION (Load via Environment Variables) ---
-VERIFY_TOKEN = os.getenv("myestate", "")
-WHATSAPP_TOKEN = os.getenv("EAAPHdN5JhgABSt54Fdrvu8pVNiukR6F3hILTcwHwvE4xVsBk0HDB6NWiZBZA3r79OPUFcIgZAwgZC4c1e5o2fC5x0AQQpmZCm97HPoNh64u0VYdTdXgtxp660unhD9FZAPX2llQEbHnOGIC7seYY48UGFoPmMj7Kh8ZCStYToEMKSJMRIGHr9YnkEbK5wPfR5aaxwZBsb65lgNBjTJeJCf50ZCYaWqWCpFqxo4NP4iN9yYstYOZClWJh1sXa9ye8qts552IZBZCuqDtZBDKF69FZC2VrZBco23WHsDRT64BU5FNhwZDZD", "")
-PHONE_NUMBER_ID = os.getenv("1282141248322293", "")
+VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "")
+WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN", "")
+PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 # Initialize Gemini Client
