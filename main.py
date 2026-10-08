@@ -1,149 +1,122 @@
 import os
 import requests
-import gspread
 from fastapi import FastAPI, Request, Response, BackgroundTasks
-from google.oauth2.service_account import Credentials
-from google import genai
 from dotenv import load_dotenv
 
-load_dotenv() 
+# استيراد دالة التوليد ودالة جلب البيانات مع خيار التحديث الإجباري
+from ai_agent import generate_reply
+from sheets_loader import get_lab_data
+
+load_dotenv()
+
 app = FastAPI()
 
-# --- CONFIGURATION (Load via Environment Variables) ---
-VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "")
-WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN", "")
-PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID", "")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
+PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
+VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "my_secret_token_123")
 
-# Initialize Gemini Client
-ai_client = genai.Client(api_key=GEMINI_API_KEY)
-
-# Initialize Google Sheets Client once globally
-SHEET_SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive",
-]
-sheets_creds = Credentials.from_service_account_file("credentials.json", scopes=SHEET_SCOPES)
-gspread_client = gspread.authorize(sheets_creds)
+# استخراج أرقام المدراء وتخزينها كـ Set لسرعة التحقق
+admin_raw = os.getenv("ADMIN_PHONE_NUMBERS", "")
+ADMIN_NUMBERS = {num.strip() for num in admin_raw.split(",") if num.strip()}
 
 
-# --- 1. FETCH AVAILABLE INVENTORY ---
-def get_available_inventory() -> str:
-    try:
-        sheet = gspread_client.open("Real Estate").worksheet("Inventory")
-        all_records = sheet.get_all_records()
-
-        available_properties = [
-            row for row in all_records
-            if str(row.get("Status", "")).strip().lower() == "available"
-        ]
-
-        if not available_properties:
-            return "No available properties at the moment."
-
-        inventory_lines = [
-            f"{idx}. Type: {item.get('Type')}, Location: {item.get('City/Area')}, "
-            f"Bedrooms: {item.get('Bedrooms')}, Price: {item.get('Price')}, "
-            f"Details: {item.get('Description')}"
-            for idx, item in enumerate(available_properties, 1)
-        ]
-        return "\n".join(inventory_lines)
-
-    except Exception as e:
-        print(f"Error reading Google Sheets: {e}")
-        return "Error fetching inventory."
-
-
-# --- 2. MATCH USER QUERY WITH GEMINI ---
-def generate_ai_reply(user_message: str, inventory_data: str) -> str:
-    prompt = f"""
-You are a helpful and polite real estate AI assistant for a local real estate agency.
-
-Here is our current AVAILABLE property inventory:
----
-{inventory_data}
----
-
-Customer Inquiry: "{user_message}"
-
-Instructions:
-1. Recommend matching properties from the available inventory.
-2. State details (Type, Location, Bedrooms, Price, Details) clearly and concisely.
-3. If no matching property is found, politely inform the customer and suggest what is currently available.
-4. Keep the reply concise and formatted for WhatsApp (use bold text or short bullet points). Reply in the same language as the inquiry (e.g., Arabic or English).
-"""
-    try:
-        response = ai_client.models.generate_content(
-            model="gemini-2.0-flash",
-            contents=prompt,
-        )
-        return response.text.strip()
-    except Exception as e:
-        print(f"Error calling Gemini API: {e}")
-        return "Thank you for reaching out! Our team will get back to you shortly with options."
-
-
-# --- 3. SEND WHATSAPP MESSAGE ---
-def send_whatsapp_message(to_phone: str, text: str):
+def send_whatsapp_message(to_number: str, text: str):
+    """إرسال رسالة نصية عبر WhatsApp Cloud API"""
     url = f"https://graph.facebook.com/v20.0/{PHONE_NUMBER_ID}/messages"
     headers = {
         "Authorization": f"Bearer {WHATSAPP_TOKEN}",
-        "Content-Type": "application/json",
+        "Content-Type": "application/json"
     }
     payload = {
         "messaging_product": "whatsapp",
-        "to": to_phone,
+        "to": to_number,
         "type": "text",
-        "text": {"body": text},
+        "text": {"body": text}
     }
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=10)
-        response.raise_for_status()
-    except requests.RequestException as e:
-        print(f"WhatsApp API delivery error: {e}")
+        requests.post(url, headers=headers, json=payload, timeout=10)
+    except Exception as e:
+        print(f"Error sending message: {e}")
 
 
-# --- BACKGROUND WORKER ---
-def process_incoming_message(sender_phone: str, user_text: str):
-    inventory = get_available_inventory()
-    reply_text = generate_ai_reply(user_text, inventory)
-    send_whatsapp_message(sender_phone, reply_text)
+def handle_admin_commands(sender_id: str, command: str) -> str:
+    """معالجة الأوامر الإدارية للمدير"""
+    cmd = command.strip().lower()
+
+    if cmd in ["/refresh", "تحديث", "ريفرش"]:
+        try:
+            # إجبار الكود على إعادة سحب البيانات من Google Sheets وتخطي الـ Cache
+            data = get_lab_data(force_refresh=True)
+            total_tests = len(data.get("tests", []))
+            lab_name = data.get("lab_info", {}).get("lab_name", "المختبر")
+            
+            return (
+                f"✅ تم تحديث بيانات {lab_name} بنجاح!\n\n"
+                f"📊 عدد الفحوصات المسجلة الآن: {total_tests}\n"
+                f"⏱️ التحديث سارٍ ومباشر لجميع المراجعين."
+            )
+        except Exception as e:
+            return f"❌ فشل تحديث البيانات من Google Sheets.\nالسبب: {str(e)}"
+
+    elif cmd in ["/status", "الحالة"]:
+        return "🟢 البوت يعمل بشكل طبيعي والاتصال بجوجل شيتس نشط."
+
+    # تم إصلاح الخطأ البرمجي هنا
+    return (
+        "⚠ أمر غير معروف. الأوامر المتاحة:\n"
+        "▫️ `/refresh` أو `تحديث` : لتحديث الأسعار من الشيت.\n"
+        "▫️ `/status` أو `الحالة` : لفحص حالة البوت."
+    )
 
 
-# --- 4. FASTAPI WEBHOOK ENDPOINTS ---
-@app.get("/webhook")
-async def verify_webhook(request: Request):
-    mode = request.query_params.get("hub.mode")
-    token = request.query_params.get("hub.verify_token")
-    challenge = request.query_params.get("hub.challenge")
+def process_incoming_message(sender_id: str, message_text: str):
+    """تحديد مسار المعالجة: أمر إداري أم سؤال مراجع عادي"""
+    clean_text = message_text.strip()
+
+    # تم إصلاح خطأ الترقيم هنا
+    # إذا كان المرسل هو المدير والرسالة تبدأ برمز أمر أو كلمات مفتاحية
+    if sender_id in ADMIN_NUMBERS and (clean_text.startswith("/") or clean_text in ["تحديث", "ريفرش", "الحالة"]):
+        reply = handle_admin_commands(sender_id, clean_text)
+        send_whatsapp_message(sender_id, reply)
+        return
+
+    # إذا كان مراجعاً عادياً (أو المدير يطرح سؤالاً عادياً لاختبار الذكاء الاصطناعي)
+    reply = generate_reply(clean_text)
+    send_whatsapp_message(sender_id, reply)
+
+
+# --- Webhook Endpoints ---
+
+@app.get("/webhook/whatsapp")
+async def verify_whatsapp(request: Request):
+    params = request.query_params
+    mode = params.get("hub.mode")
+    token = params.get("hub.verify_token")
+    challenge = params.get("hub.challenge")
 
     if mode == "subscribe" and token == VERIFY_TOKEN:
         return Response(content=challenge, media_type="text/plain")
-    return Response(content="Verification failed", status_code=403)
+    return Response(status_code=403)
 
 
-@app.post("/webhook")
-async def receive_webhook(request: Request, background_tasks: BackgroundTasks):
-    payload = await request.json()
-
+@app.post("/webhook/whatsapp")
+async def receive_whatsapp(request: Request, background_tasks: BackgroundTasks):
+    data = await request.json()
     try:
-        entries = payload.get("entry", [])
-        for entry in entries:
-            for change in entry.get("changes", []):
-                value = change.get("value", {})
-                messages = value.get("messages", [])
+        entry = data.get("entry", [])[0]
+        changes = entry.get("changes", [])[0]
+        value = changes.get("value", {})
+        messages = value.get("messages", [])
 
-                for msg in messages:
-                    if msg.get("type") == "text":
-                        sender_phone = msg.get("from")
-                        user_text = msg.get("text", {}).get("body", "").strip()
+        if messages:
+            msg = messages[0]
+            if msg.get("type") == "text":
+                sender_id = msg.get("from")
+                user_text = msg.get("text", {}).get("body", "")
 
-                        # Dispatch task to background and reply 200 immediately
-                        background_tasks.add_task(
-                            process_incoming_message, sender_phone, user_text
-                        )
+                # تشغيل المعالجة في الخلفية للرد على سيرفرات ميتا فوراً بـ 200 OK
+                background_tasks.add_task(process_incoming_message, sender_id, user_text)
     except Exception as e:
-        print(f"Error parsing webhook payload: {e}")
+        print(f"Webhook processing error: {e}")
 
-    # Meta requires a rapid 200 OK response
     return {"status": "success"}
