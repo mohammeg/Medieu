@@ -1,8 +1,7 @@
 fastapi
 uvicorn
-httpx
+requests
+google-generativeai
+python-dotenv
 gspread
 google-auth
-google-genai
-python-dotenv
-oauth2client
