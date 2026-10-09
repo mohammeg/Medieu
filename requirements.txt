@@ -1,7 +1,0 @@
-fastapi
-uvicorn
-requests
-google-generativeai
-python-dotenv
-gspread
-google-auth
