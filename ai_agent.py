@@ -15,7 +15,7 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+MODEL_NAME = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
 MAX_OUTPUT_TOKENS = 300
 TEMPERATURE = 0.15
 
