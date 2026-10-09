@@ -1,0 +1,51 @@
+{
+  "tests": [
+    {
+      "test_key": "FBS",
+      "name": "Fasting Blood Sugar",
+      "name_ar": "سكر الدم الصائم (FBS)",
+      "price": "15,000 IQD",
+      "fasting_hours": 8,
+      "notes": "Fast for at least 8 hours. Water is allowed unless your physician instructed otherwise."
+    },
+    {
+      "test_key": "CBC",
+      "name": "Complete Blood Count",
+      "name_ar": "تعداد الدم الكامل (CBC)",
+      "price": "10,000 IQD",
+      "fasting_hours": 0,
+      "notes": "No fasting is normally required."
+    },
+    {
+      "test_key": "LIPID_PROFILE",
+      "name": "Lipid Profile",
+      "name_ar": "دهون الدم (Lipid Profile)",
+      "price": "25,000 IQD",
+      "fasting_hours": 9,
+      "notes": "Preferably fast for 9–12 hours. Water is allowed."
+    },
+    {
+      "test_key": "HBA1C",
+      "name": "HbA1c",
+      "name_ar": "السكر التراكمي (HbA1c)",
+      "price": "20,000 IQD",
+      "fasting_hours": 0,
+      "notes": "No fasting is required."
+    },
+    {
+      "test_key": "TSH",
+      "name": "TSH",
+      "name_ar": "هرمون الغدة الدرقية TSH",
+      "price": "18,000 IQD",
+      "fasting_hours": 0,
+      "notes": "No fasting is normally required."
+    }
+  ],
+  "info": {
+    "lab_name": "مختبر النور الطبي التشخيصي",
+    "location": "بغداد، شارع فلسطين، قرب ساحة بيروت",
+    "maps_link": "https://maps.google.com/?q=33.333,44.430",
+    "working_hours": "السبت–الخميس: 8:00 صباحاً–8:00 مساءً؛ الجمعة: 9:00 صباحاً–2:00 مساءً",
+    "phone": "+964 780 123 4567"
+  }
+}

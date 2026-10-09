@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: medical-lab-whatsapp-ai
+    runtime: docker
+    plan: starter
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: APP_NAME
+        value: Medical Lab WhatsApp AI
+      - key: LOG_LEVEL
+        value: INFO
+      - key: WHATSAPP_GRAPH_VERSION
+        value: v20.0
+      - key: WHATSAPP_VERIFY_TOKEN
+        sync: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_APP_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: GOOGLE_SPREADSHEET_ID
+        sync: false
+      - key: ADMIN_PHONE_NUMBERS
+        sync: false
+      - key: GOOGLE_SERVICE_ACCOUNT_FILE
+        value: /app/service_account.json
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: TESTS_WORKSHEET
+        value: Tests
+      - key: INFO_WORKSHEET
+        value: Info
+      - key: SHEETS_CACHE_TTL_SECONDS
+        value: "600"
+      - key: LAB_DATA_FILE
+        value: /app/lab_data.json
+      - key: WHATSAPP_API_TIMEOUT_SECONDS
+        value: "15"
